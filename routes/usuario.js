@@ -1,5 +1,6 @@
 
 var express = require('express');
+var bcrypt = require('bcryptjs');
 
 var app = express();
 
@@ -28,17 +29,28 @@ app.get('/', (req, res, next) => {
         })
 })
 
+
+// =====================================================
+// Actualizar usuario
+// =====================================================
+
+
+app.put('/', (req, res)=>{
+    var body = req.body;
+})
+
 // =====================================================
 // Crear un nuevo usuario
 // =====================================================
 
 app.post('/', (req, res) => {
     var body = req.body;
+    var params = params.id
 
     var usuario = new Usuario({
         nombre: body.nombre,
         email: body.email,
-        password: body.password,
+        password: bcrypt.hashSync(body.password, 10),
         img: body.img,
         role: body.role
     })
