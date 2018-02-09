@@ -16,7 +16,14 @@ var Medico = require('../models/medico');
 // =====================================================
 
 app.get('/', (req, res, next) => {
+    var desde = req.query.desde || 0
+    desde = Number(desde)
+
     Medico.find({})
+    .skip(desde)
+    .limit(5)
+        .populate('usuario', 'nombre email')
+        .populate('hospital')
         .exec(
         (err, medicos) => {
             if (err) {
@@ -27,10 +34,14 @@ app.get('/', (req, res, next) => {
                 })
             }
 
-            res.status(200).json({
-                ok: true,
-                medicos
+            Medico.count({}, (err, conteo)=>{
+                res.status(200).json({
+                    ok: true,
+                    medicos,
+                    total: conteo
+                })
             })
+
         })
 })
 
@@ -68,7 +79,7 @@ app.put('/:id', mdAutenticacion.verificaToken, (req, res) => {
 
         medico.nombre = body.nombre
         medico.usuario = req.usuario._id
-        medico.hospital = req.usuario._id
+        medico.hospital = body.hospital
 
         medico.save((err, medicoGuardado) => {
             if (err) {
@@ -99,7 +110,7 @@ app.post('/', mdAutenticacion.verificaToken, (req, res) => {
     var medico = new Medico({
         nombre: body.nombre,
         usuario: req.usuario._id,
-        hospital: ''
+        hospital: body.hospital
     })
 
     medico.save((err, medicoGuardado) => {
