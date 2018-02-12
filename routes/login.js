@@ -40,12 +40,82 @@ app.post('/google', (req, res) => {
 
             var payload = login.getPayload();
             var userid = payload['sub'];
+
+            console.log('PAYLOAD',payload)
+
+
             // If request specified a G Suite domain:
             //var domain = payload['hd'];
 
-            res.status(200).json({
-                ok: true,
-                payload
+            Usuario.findOne({ email: payload.email }, (err, usuario) => {
+
+                if (err) {
+                    return res.status(500).json({
+                        ok: true,
+                        mesaje: 'Error al buscar el usuario',
+                        errors: err
+                    })
+                }
+
+                if (usuario) {
+                    if (!usuario.google) {
+
+                        return res.status(400).json({
+                            ok: true,
+                            mesaje: 'Debe usar su autenticación normal'
+                        })
+
+                    } else {
+
+                        //Crear Token
+                        usuario.password = ':)'
+                        var token = jwt.sign({ usuario: usuario }, SEED, { expiresIn: 14400 }) //4 horas
+
+
+                        res.status(200).json({
+                            ok: true,
+                            usuario: usuario,
+                            token,
+                            id: usuario._id
+                        })
+
+                    }
+                }else{
+                    var usuario = new Usuario()
+
+                    usuario.nombre = payload.name
+                    usuario.email = payload.email
+                    usuario.password = ':)'
+                    usuario.img = payload.picture
+                    usuario.google = true
+
+                    console.log(usuario)
+
+                    usuario.save((err,usuarioDB)=>{
+
+                        if (err) {
+                            return res.status(500).json({
+                                ok: true,
+                                mesaje: 'Error al crear usuario - google',
+                                errors: err
+                            })
+                        }
+
+        
+                        var token = jwt.sign({ usuario: usuarioDB }, SEED, { expiresIn: 14400 }) //4 horas
+
+
+                        res.status(200).json({
+                            ok: true,
+                            usuario: usuarioDB,
+                            token,
+                            id: usuarioDB._id
+                        })
+
+                    })
+                }
+
+
             })
 
         }
